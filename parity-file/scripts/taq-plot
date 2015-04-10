@@ -1,0 +1,39 @@
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) != 3) {
+  cat("Usage: taq-plot <input-file> <instrument> <output-file>\n",
+      file = stderr())
+  quit(status = 2)
+}
+
+inputFile  <- args[1]
+instrument <- args[2]
+outputFile <- args[3]
+
+data <- read.delim(inputFile)
+
+data <- data[data$Instrument == instrument,]
+
+data$Time     <- strptime(paste(data$Date, data$Timestamp), format = "%Y-%m-%d %H:%M:%OS")
+data$Midprice <- (data$Bid.Price + data$Ask.Price) / 2
+
+sampled <- approx(x = data$Time, y = data$Midprice, n = 10000)
+
+pdf(
+  file = outputFile,
+  paper = "a4r",
+  title = instrument,
+)
+
+plot(
+  x    = as.POSIXct(sampled$x, origin = "1970-01-01"),
+  y    = sampled$y,
+  main = instrument,
+  type = "l",
+  xlab = "Time",
+  ylab = "Price",
+)
+
+graphics.off()
